@@ -1,0 +1,31 @@
+ca65 V2.19 - Git a040c28
+Main file   : IODEMO.ASM
+Current file: IODEMO.ASM
+
+000000r 1               ;******************************
+000000r 1               ;* Demo of input and output
+000000r 1               ;* using switches and a speaker
+000000r 1               ;*
+000000r 1               ;* Schematic provided in folder
+000000r 1               ;*
+000000r 1               ;******************************
+000000r 1               
+000000r 1               			.org	$0200
+000200  1               
+000200  1               PADD = $1701					; Define absolute address of
+000200  1               								; Data Direction Reg. A
+000200  1               PAD	 = $1700					; Define absolute address of
+000200  1               								; Data Reg. A
+000200  1               
+000200  1  A9 01        INIT:		LDA		#$01		; Define I/O  0=Input  1=Output
+000202  1  8D 01 17     			STA		PADD		; PADD = PORT A DATA DIRECTION REG.
+000205  1  EE 00 17     START:		INC		PAD			; Toggle PA0, PA1-PA7 Inputs
+000208  1               								; not affected
+000208  1  AD 00 17     READ:		LDA		PAD			; READ switches into accumulator
+00020B  1  49 FF        			EOR		#$FF		; Complement switch value
+00020D  1  4A           			LSR		A			; Shift Accumulator 1 bit to the right
+00020E  1  AA           			TAX					; Transfer final count into X-Index
+00020F  1  CA           DELAY:		DEX					; Delay by an amount specified
+000210  1  10 FD        			BPL		DELAY		; By the count in the X-Index
+000212  1  30 F1        			BMI		START		; Go To START
+000214  1               			.end
