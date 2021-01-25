@@ -105,9 +105,8 @@ GETADDR:    JSR     GETBYTE
 ;*********** A2H - READ SINGLE ASCII BYTE AND CONVERT TO HEX
 A2H:        JSR     PIADAT      
             SBC     #$30        
-            CMP     #09
+            CMP     #0A
             BCC     RT
-            BEQ     RT
             SBC     #7
 RT:         RTS
 
