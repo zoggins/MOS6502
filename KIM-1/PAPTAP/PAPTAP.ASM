@@ -75,7 +75,7 @@ GETDAT:     LDA     PAD         ; YES. GET THE DATA,
             RTS                 ; AND LEAVE...
 
 ;*********** GETBYTE - READ ASCII HEX BYTE (2 digits)
-GETBYTE:    CALL    GBNOCHK
+GETBYTE:    JSR     GBNOCHK
             STA     TMPBYTE     ; STASH THE BYTE
             CLC                 ; ADD TO CHKSUM
             ADC     CHKLO
@@ -105,7 +105,7 @@ GETADDR:    JSR     GETBYTE
 ;*********** A2H - READ SINGLE ASCII BYTE AND CONVERT TO HEX
 A2H:        JSR     PIADAT      
             SBC     #$30        
-            CMP     #0A
+            CMP     #$0A
             BCC     RT
             SBC     #7
 RT:         RTS
