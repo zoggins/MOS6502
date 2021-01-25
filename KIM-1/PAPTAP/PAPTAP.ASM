@@ -16,16 +16,16 @@ PBDD = $1703					; Define absolute address of
 								; Data Direction Reg. B
 PBD	 = $1702					; Define absolute address of
 								; Data Reg. B
+OUTCH = $1EA0                   ; OUTPUT CHARACTER ROUTINE
 
 ; These have to be in zero page, you may have to 
 ; adjust their location depending on what you are 
 ; loading
-ADDRLO  = $0E                   ; DEST ADDRESS POINTER
-ADDRHI  = $0F           
-
-OUTCH = $1EA0                   ; OUTPUT CHARACTER ROUTINE
+ADDRLO  = $0000                 ; DEST ADDRESS POINTER
+ADDRHI  = $0001           
 
 ENTER:      JSR     PIASUP      ; INIT PIA
+            LDY     #$00
 START:      JSR     PIADAT      ; GET 1ST BYTE
             CMP     #$3B        ; IS IT AN ;?
             BNE     START       ; IF NOT, START OVER
@@ -35,12 +35,13 @@ START:      JSR     PIADAT      ; GET 1ST BYTE
             JSR     GETBYTE     ; GET THE BYTE COUNT
             STA     NUMBYT
             JSR     GETADDR     ; GET ADDRESS
-            LDY     #$00
 LOOP:       JSR     GETBYTE     ; READ THE BYTES
             DEC     NUMBYT
             BEQ     CHKCHK      ; LAST BYTE IS CHECKSUM
-            STA     (ADDRLO),Y
-            INY
+            STA     (ADDRLO),Y               
+            INC     ADDRLO      ; INC DEST ADDRESS
+            BNE     LOOP
+            INC     ADDRHI
             JMP     LOOP
 
 CHKCHK:     JSR     GBNOCHK     ; CHECK THE CHECKSUM   
@@ -51,7 +52,7 @@ CHKCHK:     JSR     GBNOCHK     ; CHECK THE CHECKSUM
             BEQ     START       ; GO TO NEXT LINE
 FAIL:       LDA     #$21
             JSR     OUTCH
-            BRK                 ;FAILED CHECK SUM, SO INTERRUPT
+            BRK                 ; FAILED CHECK SUM, SO INTERRUPT
 
 ;*********** PIASUP - PIA SETUP ROUTINE
 PIASUP:     LDA		#$01		; Define I/O  0=Input  1=Output
