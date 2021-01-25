@@ -1,0 +1,120 @@
+ca65 V2.19 - Git a040c28
+Main file   : PAPTAP.ASM
+Current file: PAPTAP.ASM
+
+000000r 1               ;NAM PAPTAP
+000000r 1               ;* HIGH SPEED PAPER TAPE LOADER PROGRAM
+000000r 1               ;* DEVELOPED BY DR. CHARLES ADAMS
+000000r 1               ;* TEXAS A&M UNIVERSITY
+000000r 1               ;*
+000000r 1               ;* MODIFIED BY CHRISTOPHER MALLERY
+000000r 1               ;* - Ported to KIM-1
+000000r 1               ;*
+000000r 1                           .org	$9000
+009000  1               
+009000  1               PADD = $1701					; Define absolute address of
+009000  1               								; Data Direction Reg. A
+009000  1               PAD	 = $1700					; Define absolute address of
+009000  1               								; Data Reg. A
+009000  1               PBDD = $1703					; Define absolute address of
+009000  1               								; Data Direction Reg. B
+009000  1               PBD	 = $1702					; Define absolute address of
+009000  1               								; Data Reg. B
+009000  1               
+009000  1               ; These have to be in zero page, you may have to
+009000  1               ; adjust their location depending on what you are
+009000  1               ; loading
+009000  1               ADDRLO  = $0E                   ; DEST ADDRESS POINTER
+009000  1               ADDRHI  = $0F
+009000  1               
+009000  1               OUTCH = $1EA0                   ; OUTPUT CHARACTER ROUTINE
+009000  1               
+009000  1  20 41 90     ENTER:      JSR     PIASUP      ; INIT PIA
+009003  1  20 54 90     START:      JSR     PIADAT      ; GET 1ST BYTE
+009006  1  C9 3B                    CMP     #$3B        ; IS IT AN ;?
+009008  1  D0 F9                    BNE     START       ; IF NOT, START OVER
+00900A  1  A9 00                    LDA     #$00        ; CLEAR CHECKSUM
+00900C  1  8D A7 90                 STA     CHKHI
+00900F  1  8D A8 90                 STA     CHKLO
+009012  1  20 69 90                 JSR     GETBYTE     ; GET THE BYTE COUNT
+009015  1  8D A5 90                 STA     NUMBYT
+009018  1  20 8C 90                 JSR     GETADDR     ; GET ADDRESS
+00901B  1  A0 00                    LDY     #$00
+00901D  1  20 69 90     LOOP:       JSR     GETBYTE     ; READ THE BYTES
+009020  1  CE A5 90                 DEC     NUMBYT
+009023  1  F0 06                    BEQ     CHKCHK      ; LAST BYTE IS CHECKSUM
+009025  1  91 0E                    STA     (ADDRLO),Y
+009027  1  C8                       INY
+009028  1  4C 1D 90                 JMP     LOOP
+00902B  1               
+00902B  1  20 69 90     CHKCHK:     JSR     GETBYTE     ; CHECK THE CHECKSUM
+00902E  1  CD A7 90                 CMP     CHKHI
+009031  1  D0 08                    BNE     FAIL
+009033  1  20 69 90                 JSR     GETBYTE
+009036  1  CD A8 90                 CMP     CHKLO
+009039  1  F0 C8                    BEQ     START       ; GO TO NEXT LINE
+00903B  1  A9 21        FAIL:       LDA     #$21
+00903D  1  20 A0 1E                 JSR     OUTCH
+009040  1  00                       BRK                 ;FAILED CHECK SUM, SO INTERRUPT
+009041  1               
+009041  1               ;*********** PIASUP - PIA SETUP ROUTINE
+009041  1  A9 01        PIASUP:     LDA		#$01		; Define I/O  0=Input  1=Output
+009043  1  8D 03 17     			STA		PBDD		; PBDD = PORT B DATA DIRECTION REG.
+009046  1  A9 00                    LDA     #$00        ; ACK = 0
+009048  1  8D 02 17                 STA     PBD
+00904B  1  A9 00                    LDA		#$00		; Define I/O  0=Input  1=Output
+00904D  1  8D 01 17     			STA		PADD		; PADD = PORT B DATA DIRECTION REG.
+009050  1  EE 02 17                 INC     PBD         ; ACK = 1
+009053  1  60                       RTS                 ; LEAVE...
+009054  1               
+009054  1               ;*********** PIADAT - GET DATA FROM PIA
+009054  1  EE 02 17     PIADAT:     INC     PBD         ; ACK = 0
+009057  1               
+009057  1  AD 02 17     DATLOP:     LDA     PBD         ; GET RDY
+00905A  1  30 03                    BMI     GETDAT      ; DATA PRESENT? (BIT 7 == 1)
+00905C  1  4C 57 90                 JMP     DATLOP      ; NOT YET. KEEP TRYING.
+00905F  1  AD 00 17     GETDAT:     LDA     PAD         ; YES. GET THE DATA,
+009062  1  20 A0 1E                 JSR     OUTCH       ; PRINT IT OUT
+009065  1  EE 02 17                 INC     PBD         ; RAISE ACK
+009068  1  60                       RTS                 ; AND LEAVE...
+009069  1               
+009069  1               ;*********** GETBYTE - READ ASCII HEX BYTE (2 digits)
+009069  1  20 97 90     GETBYTE:    JSR     A2H         ; GET FIRST CHARACTER TO HEX
+00906C  1  0A                       ASL     A           ; MOVE IT UP 4 BITS
+00906D  1  0A                       ASL     A
+00906E  1  0A                       ASL     A
+00906F  1  0A                       ASL     A
+009070  1  8D A6 90                 STA     TMPBYTE
+009073  1  20 97 90                 JSR     A2H         ; GET SECOND CHARACTER TO HEX
+009076  1  6D A6 90                 ADC     TMPBYTE     ; ADD THEM TOGETHER
+009079  1  8D A6 90                 STA     TMPBYTE     ; STASH THE BYTE
+00907C  1  18                       CLC                 ; ADD TO CHKSUM
+00907D  1  6D A8 90                 ADC     CHKLO
+009080  1  8D A8 90                 STA     CHKLO
+009083  1  90 03                    BCC     GBEXIT
+009085  1  EE A7 90                 INC     CHKHI
+009088  1  AD A6 90     GBEXIT:     LDA     TMPBYTE
+00908B  1  60                       RTS
+00908C  1               
+00908C  1               ;*********** GETADDR - READ ADDRESS AND LOAD X
+00908C  1  20 69 90     GETADDR:    JSR     GETBYTE
+00908F  1  85 0F                    STA     ADDRHI
+009091  1  20 69 90                 JSR     GETBYTE
+009094  1  85 0E                    STA     ADDRLO
+009096  1  60                       RTS
+009097  1               
+009097  1               ;*********** A2H - READ SINGLE ASCII BYTE AND CONVERT TO HEX
+009097  1  20 54 90     A2H:        JSR     PIADAT
+00909A  1  E9 30                    SBC     #$30
+00909C  1  C9 09                    CMP     #09
+00909E  1  90 04                    BCC     RT
+0090A0  1  F0 02                    BEQ     RT
+0090A2  1  E9 07                    SBC     #7
+0090A4  1  60           RT:         RTS
+0090A5  1               
+0090A5  1  01           NUMBYT:     .byte   1           ; BYTES LEFT TO READ
+0090A6  1  01           TMPBYTE:    .byte   1
+0090A7  1  01           CHKHI:      .byte   1           ; RUNNING CHECKSUM
+0090A8  1  01           CHKLO:      .byte   1
+0090A9  1               
+0090A9  1                           .end
