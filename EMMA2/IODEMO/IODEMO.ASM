@@ -2,11 +2,12 @@
 ;* Demo of input and output
 ;* using switches and a speaker
 ;*
-;* Schematic provided in folder
-;* 
-;* Adapted from the demo in the
-;* KIM-1 manual.
+;* Hardware: v1 speaker board
 ;*
+;* Connections: J1 1-8 = EMMA II PA0-PA7
+;*              J1 9 = GND
+;*              J1 10 = 5v
+;* 
 ;******************************
 
 			.org	$0200
