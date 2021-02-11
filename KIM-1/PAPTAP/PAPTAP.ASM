@@ -36,9 +36,9 @@ START:      JSR     PIADAT      ; GET 1ST BYTE
             STA     NUMBYT
             JSR     GETADDR     ; GET ADDRESS
 LOOP:       JSR     GETBYTE     ; READ THE BYTES
+            STA     (ADDRLO),Y               
             DEC     NUMBYT
             BEQ     CHKCHK      ; LAST BYTE IS CHECKSUM
-            STA     (ADDRLO),Y               
             INC     ADDRLO      ; INC DEST ADDRESS
             BNE     LOOP
             INC     ADDRHI
