@@ -68,6 +68,7 @@ PIASUP:     LDA		#$01		; Define I/O  0=Input  1=Output
 PIADAT:     INC     PBD         ; ACK = 0
 
 DATLOP:     LDA     PBD         ; GET RDY 
+            AND     0x80
             BMI     GETDAT      ; DATA PRESENT? (BIT 7 == 1)
             JMP     DATLOP      ; NOT YET. KEEP TRYING.
 GETDAT:     LDA     PAD         ; YES. GET THE DATA,
