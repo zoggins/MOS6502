@@ -22,102 +22,112 @@ Current file: PAPTAP.ASM
 009000  1               								; Data Reg. B
 009000  1               OUTCH = $1EA0                   ; OUTPUT CHARACTER ROUTINE
 009000  1               
+009000  1               PRTBYT = $1E3B                  ; PRINT BYTE IN ASCII HEX
+009000  1               
 009000  1               ; These have to be in zero page, you may have to
 009000  1               ; adjust their location depending on what you are
 009000  1               ; loading
 009000  1               ADDRLO  = $0000                 ; DEST ADDRESS POINTER
 009000  1               ADDRHI  = $0001
 009000  1               
-009000  1  20 46 90     ENTER:      JSR     PIASUP      ; INIT PIA
-009003  1  A0 00                    LDY     #$00
-009005  1  20 59 90     START:      JSR     PIADAT      ; GET 1ST BYTE
-009008  1  C9 3B                    CMP     #$3B        ; IS IT AN ;?
-00900A  1  D0 F9                    BNE     START       ; IF NOT, START OVER
-00900C  1  A9 00                    LDA     #$00        ; CLEAR CHECKSUM
-00900E  1  8D AE 90                 STA     CHKHI
-009011  1  8D AF 90                 STA     CHKLO
-009014  1  20 6E 90                 JSR     GETBYTE     ; GET THE BYTE COUNT
-009017  1  8D AC 90                 STA     NUMBYT
-00901A  1  20 95 90                 JSR     GETADDR     ; GET ADDRESS
-00901D  1  20 6E 90     LOOP:       JSR     GETBYTE     ; READ THE BYTES
-009020  1  CE AC 90                 DEC     NUMBYT
-009023  1  F0 0B                    BEQ     CHKCHK      ; LAST BYTE IS CHECKSUM
-009025  1  91 00                    STA     (ADDRLO),Y
+009000  1  20 49 90     ENTER:      JSR     PIASUP      ; INIT PIA
+009003  1  20 5C 90     START:      JSR     PIADAT      ; GET 1ST BYTE
+009006  1  C9 3B                    CMP     #';'        ; IS IT AN ;?
+009008  1  D0 F9                    BNE     START       ; IF NOT, START OVER
+00900A  1  A9 00                    LDA     #$00        ; CLEAR CHECKSUM
+00900C  1  8D BD 90                 STA     CHKHI
+00900F  1  8D BE 90                 STA     CHKLO
+009012  1  20 79 90                 JSR     GETBYTE     ; GET THE BYTE COUNT
+009015  1  8D BA 90                 STA     NUMBYT
+009018  1  20 A1 90                 JSR     GETADDR     ; GET ADDRESS
+00901B  1  20 79 90     LOOP:       JSR     GETBYTE     ; READ THE BYTES
+00901E  1  A0 00                    LDY     #$00
+009020  1  91 00                    STA     (ADDRLO),Y
+009022  1  CE BA 90                 DEC     NUMBYT
+009025  1  F0 09                    BEQ     CHKCHK      ; LAST BYTE IS CHECKSUM
 009027  1  E6 00                    INC     ADDRLO      ; INC DEST ADDRESS
-009029  1  D0 F2                    BNE     LOOP
+009029  1  D0 F0                    BNE     LOOP
 00902B  1  E6 01                    INC     ADDRHI
-00902D  1  4C 1D 90                 JMP     LOOP
+00902D  1  4C 1B 90                 JMP     LOOP
 009030  1               
-009030  1  20 84 90     CHKCHK:     JSR     GBNOCHK     ; CHECK THE CHECKSUM
-009033  1  CD AE 90                 CMP     CHKHI
-009036  1  D0 08                    BNE     FAIL
-009038  1  20 84 90                 JSR     GBNOCHK
-00903B  1  CD AF 90                 CMP     CHKLO
-00903E  1  F0 C5                    BEQ     START       ; GO TO NEXT LINE
-009040  1  A9 21        FAIL:       LDA     #$21
-009042  1  20 A0 1E                 JSR     OUTCH
-009045  1  00                       BRK                 ; FAILED CHECK SUM, SO INTERRUPT
-009046  1               
-009046  1               ;*********** PIASUP - PIA SETUP ROUTINE
-009046  1  A9 01        PIASUP:     LDA		#$01		; Define I/O  0=Input  1=Output
-009048  1  8D 03 17     			STA		PBDD		; PBDD = PORT B DATA DIRECTION REG.
-00904B  1  A9 00                    LDA     #$00        ; ACK = 0
-00904D  1  8D 02 17                 STA     PBD
-009050  1  A9 00                    LDA		#$00		; Define I/O  0=Input  1=Output
-009052  1  8D 01 17     			STA		PADD		; PADD = PORT B DATA DIRECTION REG.
-009055  1  EE 02 17                 INC     PBD         ; ACK = 1
-009058  1  60                       RTS                 ; LEAVE...
-009059  1               
-009059  1               ;*********** PIADAT - GET DATA FROM PIA
-009059  1  EE 02 17     PIADAT:     INC     PBD         ; ACK = 0
+009030  1  20 8F 90     CHKCHK:     JSR     GBNOCHK     ; CHECK THE CHECKSUM
+009033  1  20 3B 1E                 JSR     PRTBYT
+009036  1  CD BD 90                 CMP     CHKHI
+009039  1  D0 08                    BNE     FAIL
+00903B  1  20 8F 90                 JSR     GBNOCHK
+00903E  1  CD BE 90                 CMP     CHKLO
+009041  1  F0 C0                    BEQ     START       ; GO TO NEXT LINE
+009043  1  A9 21        FAIL:       LDA     #'!'
+009045  1  20 A0 1E                 JSR     OUTCH
+009048  1  00                       BRK                 ; FAILED CHECK SUM, SO INTERRUPT
+009049  1               
+009049  1               ;*********** PIASUP - PIA SETUP ROUTINE
+009049  1  A9 01        PIASUP:     LDA		#$01		; Define I/O  0=Input  1=Output
+00904B  1  8D 03 17     			STA		PBDD		; PBDD = PORT B DATA DIRECTION REG.
+00904E  1  A9 00                    LDA     #$00        ; ACK = 0
+009050  1  8D 02 17                 STA     PBD
+009053  1  A9 00                    LDA		#$00		; Define I/O  0=Input  1=Output
+009055  1  8D 01 17     			STA		PADD		; PADD = PORT B DATA DIRECTION REG.
+009058  1  EE 02 17                 INC     PBD         ; ACK = 1
+00905B  1  60                       RTS                 ; LEAVE...
 00905C  1               
-00905C  1  AD 02 17     DATLOP:     LDA     PBD         ; GET RDY
-00905F  1  30 03                    BMI     GETDAT      ; DATA PRESENT? (BIT 7 == 1)
-009061  1  4C 5C 90                 JMP     DATLOP      ; NOT YET. KEEP TRYING.
-009064  1  AD 00 17     GETDAT:     LDA     PAD         ; YES. GET THE DATA,
-009067  1  20 A0 1E                 JSR     OUTCH       ; PRINT IT OUT
-00906A  1  EE 02 17                 INC     PBD         ; RAISE ACK
-00906D  1  60                       RTS                 ; AND LEAVE...
-00906E  1               
-00906E  1               ;*********** GETBYTE - READ ASCII HEX BYTE (2 digits)
-00906E  1  20 84 90     GETBYTE:    JSR     GBNOCHK
-009071  1  8D AD 90                 STA     TMPBYTE     ; STASH THE BYTE
-009074  1  18                       CLC                 ; ADD TO CHKSUM
-009075  1  6D AF 90                 ADC     CHKLO
-009078  1  8D AF 90                 STA     CHKLO
-00907B  1  90 03                    BCC     GBEXIT
-00907D  1  EE AE 90                 INC     CHKHI
-009080  1  AD AD 90     GBEXIT:     LDA     TMPBYTE
-009083  1  60                       RTS
-009084  1               
-009084  1  20 A0 90     GBNOCHK:    JSR     A2H         ; GET FIRST CHARACTER TO HEX
-009087  1  0A                       ASL     A           ; MOVE IT UP 4 BITS
-009088  1  0A                       ASL     A
-009089  1  0A                       ASL     A
-00908A  1  0A                       ASL     A
-00908B  1  8D AD 90                 STA     TMPBYTE
-00908E  1  20 A0 90                 JSR     A2H         ; GET SECOND CHARACTER TO HEX
-009091  1  6D AD 90                 ADC     TMPBYTE     ; ADD THEM TOGETHER
-009094  1  60                       RTS
-009095  1               
-009095  1               ;*********** GETADDR - READ ADDRESS AND LOAD X
-009095  1  20 6E 90     GETADDR:    JSR     GETBYTE
-009098  1  85 01                    STA     ADDRHI
-00909A  1  20 6E 90                 JSR     GETBYTE
-00909D  1  85 00                    STA     ADDRLO
-00909F  1  60                       RTS
-0090A0  1               
-0090A0  1               ;*********** A2H - READ SINGLE ASCII BYTE AND CONVERT TO HEX
-0090A0  1  20 59 90     A2H:        JSR     PIADAT
-0090A3  1  E9 30                    SBC     #$30
-0090A5  1  C9 0A                    CMP     #$0A
-0090A7  1  90 02                    BCC     RT
-0090A9  1  E9 07                    SBC     #7
-0090AB  1  60           RT:         RTS
+00905C  1               ;*********** PIADAT - GET DATA FROM PIA
+00905C  1  EE 02 17     PIADAT:     INC     PBD         ; ACK = 0
+00905F  1               
+00905F  1  AD 02 17     DATLOP:     LDA     PBD         ; GET RDY
+009062  1  29 80                    AND     #$80
+009064  1  30 03                    BMI     GETDAT      ; DATA PRESENT? (BIT 7 == 1)
+009066  1  4C 5F 90                 JMP     DATLOP      ; NOT YET. KEEP TRYING.
+009069  1  AD 00 17     GETDAT:     LDA     PAD         ; YES. GET THE DATA,
+00906C  1  8D BB 90                 STA     TMPBYTE1
+00906F  1  20 A0 1E                 JSR     OUTCH       ; PRINT IT OUT
+009072  1  EE 02 17                 INC     PBD         ; RAISE ACK
+009075  1  AD BB 90                 LDA     TMPBYTE1
+009078  1  60                       RTS                 ; AND LEAVE...
+009079  1               
+009079  1               ;*********** GETBYTE - READ ASCII HEX BYTE (2 digits)
+009079  1  20 8F 90     GETBYTE:    JSR     GBNOCHK
+00907C  1  8D BC 90                 STA     TMPBYTE2     ; STASH THE BYTE
+00907F  1  18                       CLC                  ; ADD TO CHKSUM
+009080  1  6D BE 90                 ADC     CHKLO
+009083  1  8D BE 90                 STA     CHKLO
+009086  1  90 03                    BCC     GBEXIT
+009088  1  EE BD 90                 INC     CHKHI
+00908B  1  AD BC 90     GBEXIT:     LDA     TMPBYTE2
+00908E  1  60                       RTS
+00908F  1               
+00908F  1  20 AC 90     GBNOCHK:    JSR     A2H         ; GET FIRST CHARACTER TO HEX
+009092  1  0A                       ASL     A           ; MOVE IT UP 4 BITS
+009093  1  0A                       ASL     A
+009094  1  0A                       ASL     A
+009095  1  0A                       ASL     A
+009096  1  8D BC 90                 STA     TMPBYTE2
+009099  1  20 AC 90                 JSR     A2H         ; GET SECOND CHARACTER TO HEX
+00909C  1  18                       CLC
+00909D  1  6D BC 90                 ADC     TMPBYTE2     ; ADD THEM TOGETHER
+0090A0  1  60                       RTS
+0090A1  1               
+0090A1  1               ;*********** GETADDR - READ ADDRESS AND LOAD X
+0090A1  1  20 79 90     GETADDR:    JSR     GETBYTE
+0090A4  1  85 01                    STA     ADDRHI
+0090A6  1  20 79 90                 JSR     GETBYTE
+0090A9  1  85 00                    STA     ADDRLO
+0090AB  1  60                       RTS
 0090AC  1               
-0090AC  1  01           NUMBYT:     .byte   1           ; BYTES LEFT TO READ
-0090AD  1  01           TMPBYTE:    .byte   1
-0090AE  1  01           CHKHI:      .byte   1           ; RUNNING CHECKSUM
-0090AF  1  01           CHKLO:      .byte   1
-0090B0  1               
-0090B0  1                           .end
+0090AC  1               ;*********** A2H - READ SINGLE ASCII BYTE AND CONVERT TO HEX
+0090AC  1  20 5C 90     A2H:        JSR     PIADAT
+0090AF  1  38                       SEC
+0090B0  1  E9 30                    SBC     #'0'
+0090B2  1  C9 0A                    CMP     #$0A
+0090B4  1  90 03                    BCC     RT
+0090B6  1  38                       SEC
+0090B7  1  E9 07                    SBC     #7
+0090B9  1  60           RT:         RTS
+0090BA  1               
+0090BA  1  01           NUMBYT:      .byte   1           ; BYTES LEFT TO READ
+0090BB  1  01           TMPBYTE1:    .byte   1
+0090BC  1  01           TMPBYTE2:    .byte   1
+0090BD  1  01           CHKHI:       .byte   1           ; RUNNING CHECKSUM
+0090BE  1  01           CHKLO:       .byte   1
+0090BF  1               
+0090BF  1                           .end
