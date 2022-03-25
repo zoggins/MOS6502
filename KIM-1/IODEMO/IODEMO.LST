@@ -6,7 +6,11 @@ Current file: IODEMO.ASM
 000000r 1               ;* Demo of input and output
 000000r 1               ;* using switches and a speaker
 000000r 1               ;*
-000000r 1               ;* Schematic provided in folder
+000000r 1               ;* Hardware: v1 speaker board
+000000r 1               ;*
+000000r 1               ;* Connections: J1 1-8 = KIM-1 PA0-PA7
+000000r 1               ;*              J1 9 = GND
+000000r 1               ;*              J1 10 = 5v
 000000r 1               ;*
 000000r 1               ;******************************
 000000r 1               
